@@ -42,7 +42,7 @@ func createTables() {
 		amount INTEGER NOT NULL,
 		category TEXT NOT NULL,
 		date DATETIME NOT NULL,
-		expense_type INTEGER NOT NULL,
+		expense_type TEXT NOT NULL,
 		note TEXT NOT NULL,
 		user_id INTEGER,
 		FOREIGN KEY(user_id) REFERENCES users(id)
