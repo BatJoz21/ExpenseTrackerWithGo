@@ -42,6 +42,23 @@ func (e *Expense) SaveExpense() error {
 	return nil
 }
 
+func (e Expense) UpdateExpenseByID() error {
+	query := `UPDATE expenses SET account = ?, amount = ?, category = ?, date = ?, expense_type = ?, note = ?
+	WHERE id = ?`
+
+	stmt, err := db.DataBase.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(e.Account, e.Amount, e.Category, e.Date, e.Expense_type, e.Note, e.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetExpensebyID(eID int64) (*Expense, error) {
 	query := `SELECT * FROM expenses WHERE id = ?`
 
@@ -82,4 +99,22 @@ func GetAllExpenses() ([]Expense, error) {
 	}
 
 	return allExpenses, nil
+}
+
+func (e Expense) DeleteExpenseByID() error {
+	query := `DELETE FROM expenses WHERE id = ?`
+
+	stmt, err := db.DataBase.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(e.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

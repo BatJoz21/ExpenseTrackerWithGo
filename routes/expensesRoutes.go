@@ -2,9 +2,9 @@ package routes
 
 import (
 	"net/http"
-	"strconv"
 
 	"example.com/expense-tracker-with-go/models"
+	"example.com/expense-tracker-with-go/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,8 +28,41 @@ func createExpense(context *gin.Context) {
 	context.JSON(http.StatusCreated, gin.H{"message": "new expenses successfully stored", "expense": expense})
 }
 
+func updateExpense(context *gin.Context) {
+	eID, err := utils.FromStringToInt64(context.Param("id"))
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "failed to parse data"})
+		return
+	}
+
+	// var oldExpense *models.Expense
+	// oldExpense, err = models.GetExpensebyID(eID)
+	// if err != nil {
+	// 	context.JSON(http.StatusInternalServerError, gin.H{"message": "failed to fetch expense from database"})
+	// 	return
+	// }
+
+	// Check if the current active user ID == oldExpense ID
+
+	var updatedExpense models.Expense
+	err = context.ShouldBindJSON(&updatedExpense)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "failed read user's input"})
+		return
+	}
+	updatedExpense.ID = eID
+
+	err = updatedExpense.UpdateExpenseByID()
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "failed to update expense data on database"})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"message": "expense successfully updated", "expense": updatedExpense})
+}
+
 func getExpense(context *gin.Context) {
-	eID, err := strconv.ParseInt(context.Param("id"), 10, 64)
+	eID, err := utils.FromStringToInt64(context.Param("id"))
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "failed to parse data"})
 		return
@@ -53,4 +86,28 @@ func getAllExpenses(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, expenses)
+}
+
+func deleteExpense(context *gin.Context) {
+	eID, err := utils.FromStringToInt64(context.Param("id"))
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "failed to parse data"})
+		return
+	}
+
+	expense, err := models.GetExpensebyID(eID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "failed to fetch data from database"})
+		return
+	}
+
+	// checking current active user's ID == expense ID
+
+	err = expense.DeleteExpenseByID()
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "failed to delete data from database"})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"message": "expense has been deleted"})
 }
