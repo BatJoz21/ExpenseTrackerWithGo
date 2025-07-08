@@ -42,8 +42,25 @@ func (e *Expense) SaveExpense() error {
 	return nil
 }
 
+func GetExpensebyID(eID int64) (*Expense, error) {
+	query := `SELECT * FROM expenses WHERE id = ?`
+
+	row := db.DataBase.QueryRow(query, eID)
+
+	var expense Expense
+	err := row.Scan(
+		&expense.ID, &expense.Account, &expense.Amount, &expense.Category, &expense.Date,
+		&expense.Expense_type, &expense.Note, &expense.User_ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &expense, nil
+}
+
 func GetAllExpenses() ([]Expense, error) {
 	query := "SELECT * FROM expenses"
+
 	rows, err := db.DataBase.Query(query)
 	if err != nil {
 		return nil, err
