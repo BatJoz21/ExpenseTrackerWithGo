@@ -16,8 +16,7 @@ func createExpense(context *gin.Context) {
 		return
 	}
 
-	var userID int64 = 1 // temporary user ID
-	expense.User_ID = userID
+	expense.User_ID = context.GetInt64("user_id")
 
 	err = expense.SaveExpense()
 	if err != nil {
@@ -35,14 +34,19 @@ func updateExpense(context *gin.Context) {
 		return
 	}
 
-	// var oldExpense *models.Expense
-	// oldExpense, err = models.GetExpensebyID(eID)
-	// if err != nil {
-	// 	context.JSON(http.StatusInternalServerError, gin.H{"message": "failed to fetch expense from database"})
-	// 	return
-	// }
+	var oldExpense *models.Expense
+	oldExpense, err = models.GetExpensebyID(eID)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "failed to fetch expense from database"})
+		return
+	}
 
 	// Check if the current active user ID == oldExpense ID
+	currentUsrID := context.GetInt64("user_id")
+	if oldExpense.User_ID != currentUsrID {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "user unauthorized to update this expense"})
+		return
+	}
 
 	var updatedExpense models.Expense
 	err = context.ShouldBindJSON(&updatedExpense)
