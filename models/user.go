@@ -1,15 +1,17 @@
 package models
 
 import (
+	"errors"
+
 	"example.com/expense-tracker-with-go/db"
 	"example.com/expense-tracker-with-go/utils"
 )
 
 type User struct {
 	ID       int64
-	Fullname string `binding:"required"`
-	Email    string `binding:"required"`
-	Password string `binding:"required"`
+	Fullname string `json:"fullname"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
 	Role     string
 }
 
@@ -40,5 +42,24 @@ func (u User) SaveNewUser() error {
 	}
 
 	u.ID = id
+	return nil
+}
+
+func (u *User) ValidatingCredentials() error {
+	query := `SELECT id, fullname, password, role FROM users WHERE email = ?`
+
+	row := db.DataBase.QueryRow(query, u.Email)
+
+	var retrievedPassword string
+	err := row.Scan(&u.ID, &u.Fullname, &retrievedPassword, &u.Role)
+	if err != nil {
+		return errors.New("credentials invalid")
+	}
+
+	isPasswordValid := utils.CheckPasswordHash(u.Password, retrievedPassword)
+	if !isPasswordValid {
+		return errors.New("credentials invalid")
+	}
+
 	return nil
 }
