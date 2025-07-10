@@ -75,10 +75,10 @@ func GetExpensebyID(eID int64) (*Expense, error) {
 	return &expense, nil
 }
 
-func GetAllExpenses() ([]Expense, error) {
-	query := "SELECT * FROM expenses"
+func GetAllExpensesByUserID(uID int64) ([]Expense, error) {
+	query := "SELECT * FROM expenses WHERE user_id = ?"
 
-	rows, err := db.DataBase.Query(query)
+	rows, err := db.DataBase.Query(query, uID)
 	if err != nil {
 		return nil, err
 	}

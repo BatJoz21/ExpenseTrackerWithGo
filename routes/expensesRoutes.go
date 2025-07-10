@@ -55,6 +55,7 @@ func updateExpense(context *gin.Context) {
 		return
 	}
 	updatedExpense.ID = eID
+	updatedExpense.User_ID = currentUsrID
 
 	err = updatedExpense.UpdateExpenseByID()
 	if err != nil {
@@ -79,11 +80,19 @@ func getExpense(context *gin.Context) {
 		return
 	}
 
+	currentUsrID := context.GetInt64("user_id")
+	if expense.User_ID != currentUsrID {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "user unauthorized to fetch data from database"})
+		return
+	}
+
 	context.JSON(http.StatusOK, expense)
 }
 
 func getAllExpenses(context *gin.Context) {
-	expenses, err := models.GetAllExpenses()
+	currentUsrID := context.GetInt64("user_id")
+
+	expenses, err := models.GetAllExpensesByUserID(currentUsrID)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "failed to fetch data from server"})
 		return
