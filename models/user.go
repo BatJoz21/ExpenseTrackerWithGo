@@ -63,3 +63,89 @@ func (u *User) ValidatingCredentials() error {
 
 	return nil
 }
+
+func (u User) CreateAdmin() error {
+	query := `INSERT INTO users(fullname, email, password, role) VALUES (?, ?, ?, ?)`
+
+	stmt, err := db.DataBase.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	u.Role = "ADMIN"
+	encryptedPass, err := utils.HashPassword(u.Password)
+	if err != nil {
+		return err
+	}
+
+	result, err := stmt.Exec(u.Fullname, u.Email, encryptedPass, u.Role)
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	u.ID = id
+	return nil
+}
+
+func (u User) RemoveUserByID() error {
+	query := "DELETE FROM users WHERE id = ?"
+
+	stmt, err := db.DataBase.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(u.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetUserByID(usrID int64) (*User, error) {
+	query := `SELECT * FROM users WHERE id = ? AND role = ?`
+
+	row := db.DataBase.QueryRow(query, usrID, "USER")
+	
+	var user User
+	err := row.Scan(&user.ID, &user.Fullname, &user.Email, &user.Password, &user.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func GetAllUsersData() ([]User, error) {
+	query := `SELECT * FROM users WHERE role = ?`
+
+	rows, err := db.DataBase.Query(query, "USER")
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var allUser []User
+	for rows.Next() {
+		var user User
+		err := rows.Scan(&user.ID, &user.Fullname, &user.Email, &user.Password, &user.Role)
+		if err != nil {
+			return nil, err
+		}
+
+		allUser = append(allUser, user)
+	}
+
+	return allUser, nil
+}
